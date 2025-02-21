@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 app = Flask(__name__)
 
 def get_secret(secret_name):
-    """Fetch secret value from Secret Manager"""
+    """Fetch secret value from Secret Manager1"""
     project_id = os.getenv("GCP_PROJECT_ID", "your-project-id")
     secret_path = f"projects/{project_id}/secrets/db_admin_password/versions/latest"
 
