@@ -1,0 +1,10 @@
+.DS_Store
+*.hcl
+/terraform/gcp/0-bootstrap/.terraform
+terraform/gcp/0-bootstrap/terraform
+/terraform/gcp/1-networking/.terraform
+terraform/gcp/1-networking/terraform
+/terraform/gcp/2-app/.terraform
+terraform/gcp/2-app/terraform
+/terraform/gcp/3-monitoring/.terraform
+terraform/gcp/3-monitoring/terraform

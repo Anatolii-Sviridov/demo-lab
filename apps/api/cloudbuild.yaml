@@ -1,0 +1,12 @@
+# Build and Deploy Backend
+
+steps:
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    script: |
+     #!/usr/bin/env bash
+     cd apps/api
+     ls -l
+     gcloud run deploy api --source=. --region=us-central1 --project=asvir-rnd
+
+
+logsBucket: 'gs://asvir-rnd-cloudbuild-logs'
