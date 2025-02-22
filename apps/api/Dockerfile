@@ -1,17 +1,17 @@
-# Use an official lightweight Python image
+# Use an official Python runtime as a base image
 FROM python:3.9
 
 # Set the working directory
 WORKDIR /app
 
-# Copy files to the container
-COPY . .
+# Copy application files
+COPY app.py requirements.txt ./
 
 # Install dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Expose the port Flask runs on
+# Expose the application port
 EXPOSE 8080
 
-# Run the application
-CMD ["gunicorn", "-w", "4", "-b", "0.0.0.0:8080", "app:app"]
+# Start the application using Gunicorn
+CMD ["gunicorn", "-b", "0.0.0.0:8080", "app:app"]

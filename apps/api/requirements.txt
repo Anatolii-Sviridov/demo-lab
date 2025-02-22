@@ -1,4 +1,3 @@
-Flask
-pymysql
+flask
+psycopg2
 gunicorn
-google-cloud-secret-manager

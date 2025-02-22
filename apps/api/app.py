@@ -1,8 +1,7 @@
-from flask import Flask, jsonify
 import os
-import pymysql
 import logging
-from google.cloud import secretmanager
+import psycopg2
+from flask import Flask, jsonify
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
@@ -10,72 +9,51 @@ logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 
-def get_secret(secret_name):
-    """Fetch secret value from Secret Manager1"""
-    project_id = os.getenv("GCP_PROJECT_ID", "your-project-id")
-    secret_path = f"projects/{project_id}/secrets/db_admin_password/versions/latest"
-
-    try:
-        logger.info(f"Fetching secret: {secret_name} from Secret Manager")
-        client = secretmanager.SecretManagerServiceClient()
-        response = client.access_secret_version(name=secret_path)
-        secret_value = response.payload.data.decode("UTF-8")
-        logger.info(f"Successfully retrieved secret: {secret_name}")
-        return secret_value
-    except Exception as e:
-        logger.error(f"Error fetching secret {secret_name}: {e}")
-        return None  # Avoid crashing
-
-# Get Cloud SQL connection details
-DB_USER = os.getenv("DB_USER", "root")
-DB_PASS = get_secret("DB_PASS")  # Fetch password from Secret Manager
-DB_NAME = os.getenv("DB_NAME", "mydatabase")
-DB_HOST = os.getenv("DB_HOST", "127.0.0.1")  # Change to your Cloud SQL host
+# Cloud SQL connection details
+DB_USER = os.getenv("DB_USER")
+DB_PASS = os.getenv("DB_PASS")
+DB_NAME = os.getenv("DB_NAME")
+DB_HOST = os.getenv("DB_HOST")  # Use instance private IP
 
 def get_db_connection():
-    """Establishes connection to Cloud SQL"""
+    """Creates a connection to the Cloud SQL database"""
     try:
-        logger.info(f"Connecting to database {DB_NAME} on host {DB_HOST} as user {DB_USER}")
-        connection = pymysql.connect(
-            host=DB_HOST,
+        logger.info("Connecting to database: %s on host: %s", DB_NAME, DB_HOST)
+        conn = psycopg2.connect(
+            dbname=DB_NAME,
             user=DB_USER,
             password=DB_PASS,
-            database=DB_NAME,
-            cursorclass=pymysql.cursors.DictCursor
+            host=DB_HOST
         )
-        logger.info("Database connection successful")
-        return connection
+        logger.info("Database connection established successfully.")
+        return conn
     except Exception as e:
-        logger.error(f"Database connection failed: {e}")
-        return None
+        logger.error("Database connection failed: %s", str(e))
+        raise
 
-@app.route('/')
-def home():
-    logger.info("Received request on /")
-    return "Welcome to the Cloud SQL + Cloud Run API!"
-
-@app.route('/data', methods=['GET'])
+@app.route("/data", methods=["GET"])
 def get_data():
     """Fetches data from the database"""
-    logger.info("Received request on /data")
-    connection = get_db_connection()
-    if connection is None:
-        logger.error("Database connection not established")
-        return jsonify({"error": "Database connection failed"}), 500
-
+    logger.info("Received request: GET /data")
     try:
-        with connection.cursor() as cursor:
-            logger.info("Executing SQL query: SELECT * FROM my_table LIMIT 10;")
-            cursor.execute("SELECT * FROM my_table LIMIT 10;")
-            result = cursor.fetchall()
-            logger.info(f"Query successful, retrieved {len(result)} records")
-        return jsonify(result)
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM my_table LIMIT 10;")
+        rows = cursor.fetchall()
+        conn.close()
+        
+        logger.info("Fetched %d records from database.", len(rows))
+        return jsonify([{"id": row[0], "name": row[1]} for row in rows])
     except Exception as e:
-        logger.error(f"Error executing query: {e}")
-        return jsonify({"error": str(e)}), 500
-    finally:
-        connection.close()
-        logger.info("Database connection closed")
+        logger.error("Error fetching data: %s", str(e))
+        return jsonify({"error": "Failed to fetch data"}), 500
 
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=8080)
+@app.route("/", methods=["GET"])
+def health_check():
+    logger.info("Health check: GET /")
+    return "Cloud Run App is running!", 200
+
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 8080))
+    logger.info("Starting Flask app on port %d", port)
+    app.run(host="0.0.0.0", port=port)
