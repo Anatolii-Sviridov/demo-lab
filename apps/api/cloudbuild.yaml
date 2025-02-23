@@ -6,7 +6,7 @@ steps:
      #!/usr/bin/env bash
      cd apps/api
      ls -l
-     gcloud run deploy api --source=. --region=us-central1 --project=asvir-rnd
+     gcloud run deploy api --source=. --region=us-central1 --project=asvir-rnd --image=us-central1-docker.pkg.dev/asvir-rnd/cloud-run-source-deploy/api:latest
 
 
 logsBucket: 'gs://asvir-rnd-cloudbuild-logs'

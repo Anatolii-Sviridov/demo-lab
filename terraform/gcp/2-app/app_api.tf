@@ -66,8 +66,8 @@ resource "google_cloud_run_v2_service" "api" {
 
     containers {
       name  = "api"
-      #image = "${var.region}-docker.pkg.dev/${var.project_id}/cloud-run-source-deploy/api:latest"
-      image = "us-docker.pkg.dev/cloudrun/container/hello"
+      image = "${var.region}-docker.pkg.dev/${var.project_id}/cloud-run-source-deploy/api:latest"
+      #image = "us-docker.pkg.dev/cloudrun/container/hello"
 
       ports {
         container_port = 8080
