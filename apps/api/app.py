@@ -51,7 +51,7 @@ def get_data():
 @app.route("/", methods=["GET"])
 def health_check():
     logger.info("Health check: GET /")
-    return "Cloud Run App is running!", 200
+    return "Cloud Run App is running! Test", 200
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8080))
